@@ -1,53 +1,75 @@
-import { StyleSheet, FlatList, Platform, TouchableHighlight, TouchableNativeFeedback } from 'react-native';
+import { StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import { Ionicons } from '@expo/vector-icons';
-import { Link, useNavigation } from 'expo-router';
+import { router } from 'expo-router';
 
-const transactions = [
-  { id: 1, description: '1 Piercing', amount: 15 },
-  { id: 2, description: '2x1 Piercing (1P)', amount: 20 },
-  { id: 3, description: '2x1 Piercing (2P)', amount: 20 },
-  { id: 4, description: 'Retiro caja', amount: -20 },
-];
+// Firebase
+import { db } from '../../config/firebaseConfig';
+import { ref, once, onValue } from 'firebase/database';
+import { useEffect, useState } from 'react';
+
+interface Movement {
+  id: string,
+  name: string,
+  time: string
+}
+
+const movementsRef = ref(db, "movements");
 
 export default function TabOneScreen() {
-  const TouchableComponent = Platform.OS === 'android' ? TouchableNativeFeedback : TouchableHighlight;
+  const [movements, setMovements] = useState<Movement[]>([]);
 
-  const renderTransaction = ({ item }) => (
-    <View style={styles.transaction}>
-      <Text style={styles.description}>{item.description}</Text>
-      <Text style={styles.amount}>{item.amount} €</Text>
-    </View>
-  );
+  const handlePress = (to: string) => {
+    router.navigate(to);
+  };
+
+  useEffect(() => {
+    const unsuscribe = onValue(movementsRef, (snap) => {
+      const data = snap.val();
+      const renderedData = Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      }));
+
+      setMovements(renderedData);
+    })
+
+    return () => unsuscribe();
+  });
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>¿Qué deseas hacer?</Text>
       <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
       <View style={styles.row}>
-        <Link href="/new-item">
+        <TouchableOpacity onPress={() => handlePress('/new-item')}>
           <View style={styles.item}>
             <Ionicons name="basket-outline" size={32} />
             <Text style={styles.text}>Servicio</Text>
           </View>
-        </Link>
-        <View style={styles.item}>
-          <Ionicons name="cash-outline" size={32} />
-          <Text style={styles.text}>Caja</Text>
-        </View>
-        <View style={styles.item}>
-          <Ionicons name="cube-outline" size={32} />
-          <Text style={styles.text}>Stock</Text>
-        </View>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => handlePress('/new-item')}>
+          <View style={styles.item}>
+            <Ionicons name="cash-outline" size={32} />
+            <Text style={styles.text}>Caja</Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => handlePress('/new-item')}>
+          <View style={styles.item}>
+            <Ionicons name="cube-outline" size={32} />
+            <Text style={styles.text}>Stock</Text>
+          </View>
+        </TouchableOpacity>
       </View>
       <Text style={styles.title}>Últimos movimientos</Text>
       <View style={styles.separatorList} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
       <View style={styles.listContainer}>
-        <FlatList
-          data={transactions}
-          renderItem={renderTransaction}
-          keyExtractor={(item) => item.id.toString()}
-        />
+        {movements.map((item: Movement) => (
+          <View style={styles.transaction} key={item.id}>            
+            <Text style={styles.amount}>{item.name}</Text>
+            <Text style={styles.description}>{item.time}</Text>
+          </View>
+        ))}
       </View>
     </View>
   );

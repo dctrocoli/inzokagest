@@ -23,8 +23,8 @@ export default function NewItem() {
     const [selectedItems, setSelectedItems] = useState<{ [key: string]: any }>({});
 
     const handlePress = (item: Item) => {
-        if(selectedItems[item.type] == item.id){
-            item.id = -999
+        if (selectedItems[item.type] == item.id) {
+            item.id = -1
         }
 
         const updatedDictionary = {
@@ -37,6 +37,18 @@ export default function NewItem() {
 
     const getValue = (key: string) => {
         return selectedItems[key];
+    };
+
+    const checkTransparent = () => {
+        if (!getValue('service') || getValue('service') == -1 || getValue('service') == 1) return true;
+    };
+
+    const checkFinish = () => {
+        if (getValue('service') == 1) {
+            if (getValue('jewel1') > 0) return true;
+        } else if (getValue('service') > 1) {
+            if (getValue('jewel1') > 0 && getValue('jewel2') > 0) return true;
+        }
     };
 
     const transactions = [
@@ -58,10 +70,13 @@ export default function NewItem() {
     ];
 
     const handleCompleteProcess = () => {
-        navigation.goBack();
+        if (checkFinish()){
+            console.log(selectedItems)
+            //navigation.goBack();
+        } 
     };
 
-    const renderTransaction = ({ 
+    const renderTransaction = ({
         item,
     }) => (
         <TouchableOpacity style={[styles.transaction, getValue(item.type) === item.id && styles.selectedItem]}
@@ -73,39 +88,45 @@ export default function NewItem() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Seleccionar servicio</Text>
-            <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-            <View style={styles.listContainer}>
-                <FlatList
-                    data={transactions}
-                    renderItem={renderTransaction}
-                    keyExtractor={(item) => item.id.toString()}
-                />
+            <View style={styles.itemContainer}>
+                <Text style={styles.title}>Seleccionar servicio</Text>
+                <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
+                <View style={styles.listContainer}>
+                    <FlatList
+                        data={transactions}
+                        renderItem={renderTransaction}
+                        keyExtractor={(item) => item.id.toString()}
+                    />
+                </View>
             </View>
 
-            <Text style={styles.title}>Seleccionar joya 1</Text>
-            <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-            <View style={styles.listContainer}>
-                <FlatList
-                    data={transactions2}
-                    renderItem={renderTransaction}
-                    keyExtractor={(item) => item.id.toString()}
-                />
+            <View style={styles.itemContainer}>
+                <Text style={styles.title}>Seleccionar joya 1</Text>
+                <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
+                <View style={styles.listContainer}>
+                    <FlatList
+                        data={transactions2}
+                        renderItem={renderTransaction}
+                        keyExtractor={(item) => item.id.toString()}
+                    />
+                </View>
             </View>
 
-            <Text style={styles.title}>Seleccionar joya 2</Text>
-            <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-            <View style={styles.listContainer}>
-                <FlatList
-                    data={transactions3}
-                    renderItem={renderTransaction}
-                    keyExtractor={(item) => item.id.toString()}
-                />
+            <View style={[styles.itemContainer, checkTransparent() && styles.transparent]}>
+                <Text style={styles.title}>Seleccionar joya 2</Text>
+                <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
+                <View style={styles.listContainer}>
+                    <FlatList
+                        data={transactions3}
+                        renderItem={renderTransaction}
+                        keyExtractor={(item) => item.id.toString()}
+                    />
+                </View>
             </View>
 
-            <Pressable style={styles.button} onPress={handleCompleteProcess}>
+            <TouchableOpacity style={[styles.button, !checkFinish() && styles.disabledButton]} onPress={handleCompleteProcess}>
                 <Text style={styles.text}>Completar proceso</Text>
-            </Pressable>
+            </TouchableOpacity>
         </View>
     );
 }
@@ -133,12 +154,19 @@ const styles = StyleSheet.create({
         padding: 10,
         width: "100%",
         paddingTop: 0,
+        //backgroundColor: 'red',
         //marginBottom: 30
     },
     separatorList: {
         marginVertical: 5,
         height: 1,
         width: '80%',
+    },
+    itemContainer: {
+        flex: 1,
+        alignItems: 'center',
+        width: '100%',
+        //backgroundColor: 'skyblue',
     },
     selectedItem: {
         color: "white",
@@ -160,6 +188,10 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
     },
+    transparent: {
+        backgroundColor: 'red',
+        display: 'none'
+    },
 
     // Botón
     button: {
@@ -178,4 +210,7 @@ const styles = StyleSheet.create({
         letterSpacing: 0.25,
         color: 'white',
     },
+    disabledButton: {
+        opacity: 0.5
+    }
 });
